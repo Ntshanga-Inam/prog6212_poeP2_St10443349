@@ -1,0 +1,87 @@
+{
+  "Claims": [
+    {
+      "ClaimId": 1,
+      "LecturerId": 1,
+      "ClaimMonth": "2024-01-01T00:00:00",
+      "TotalHours": 40.0,
+      "HourlyRate": 250.0,
+      "Amount": 10000.0,
+      "Notes": "Regular teaching hours",
+      "Status": "Approved",
+      "SubmittedDate": "2024-01-05T00:00:00",
+      "ApprovedDate": "2024-01-10T00:00:00",
+      "ApprovedBy": "Manager",
+      "ClaimItems": [],
+      "Documents": []
+    },
+    {
+      "ClaimId": 2,
+      "LecturerId": 1,
+      "ClaimMonth": "2025-10-01T00:00:00",
+      "TotalHours": 2,
+      "HourlyRate": 250,
+      "Amount": 500,
+      "Notes": "[REJECTED] invalid",
+      "Status": "Rejected",
+      "SubmittedDate": "2025-10-20T15:56:22.806725+02:00",
+      "ApprovedDate": null,
+      "ApprovedBy": "System",
+      "ClaimItems": [],
+      "Documents": []
+    },
+    {
+      "ClaimId": 3,
+      "LecturerId": 1,
+      "ClaimMonth": "2025-11-01T00:00:00",
+      "TotalHours": 5,
+      "HourlyRate": 150,
+      "Amount": 750,
+      "Notes": "second claim",
+      "Status": "With Manager",
+      "SubmittedDate": "2025-10-20T16:25:59.8745815+02:00",
+      "ApprovedDate": null,
+      "ApprovedBy": "Coordinator",
+      "ClaimItems": [],
+      "Documents": []
+    },
+    {
+      "ClaimId": 4,
+      "LecturerId": 1,
+      "ClaimMonth": "2025-12-01T00:00:00",
+      "TotalHours": 4.5,
+      "HourlyRate": 290,
+      "Amount": 1305.0,
+      "Notes": "asbonge",
+      "Status": "Submitted",
+      "SubmittedDate": "2025-10-22T15:28:42.4477743+02:00",
+      "ApprovedDate": null,
+      "ApprovedBy": null,
+      "ClaimItems": [],
+      "Documents": []
+    }
+  ],
+  "Users": [
+    {
+      "UserId": 1,
+      "FirstName": "John",
+      "LastName": "Smith",
+      "Email": "john.smith@university.ac.za",
+      "Role": "Lecturer"
+    },
+    {
+      "UserId": 2,
+      "FirstName": "Sarah",
+      "LastName": "Johnson",
+      "Email": "sarah.j@university.ac.za",
+      "Role": "Coordinator"
+    },
+    {
+      "UserId": 3,
+      "FirstName": "Michael",
+      "LastName": "Brown",
+      "Email": "michael.b@university.ac.za",
+      "Role": "Manager"
+    }
+  ]
+}
