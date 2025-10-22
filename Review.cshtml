@@ -1,0 +1,315 @@
+﻿@model CMCS.Models.Claim
+@{
+    ViewData["Title"] = "Review Claim";
+    var userRole = "Coordinator"; // This would come from authentication
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-search me-2"></i>Review Claim #@Model.ClaimId</h4>
+            </div>
+            <div class="card-body">
+                <!-- Claim Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Claim Information</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th>Lecturer:</th>
+                                <td>Dr. John Smith</td>
+                            </tr>
+                            <tr>
+                                <th>Claim Month:</th>
+                                <td>@Model.ClaimMonth.ToString("MMMM yyyy")</td>
+                            </tr>
+                            <tr>
+                                <th>Total Hours:</th>
+                                <td>@Model.TotalHours</td>
+                            </tr>
+                            <tr>
+                                <th>Hourly Rate:</th>
+                                <td>R @Model.HourlyRate.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <th>Total Amount:</th>
+                                <td class="fw-bold">R @Model.Amount.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    @if (Model.Status == "Submitted" || Model.Status == "With Coordinator")
+                                    {
+                                        <span class="badge bg-warning">@Model.Status</span>
+                                    }
+                                    else if (Model.Status == "With Manager")
+                                    {
+                                        <span class="badge bg-info">@Model.Status</span>
+                                    }
+                                    else if (Model.Status == "Approved")
+                                    {
+                                        <span class="badge bg-success">@Model.Status</span>
+                                    }
+                                    else if (Model.Status == "Rejected")
+                                    {
+                                        <span class="badge bg-danger">@Model.Status</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Submitted Date:</th>
+                                <td>@Model.SubmittedDate.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Notes</h5>
+                        <div class="border rounded p-3 bg-light">
+                            @if (string.IsNullOrEmpty(Model.Notes))
+                            {
+                                <em class="text-muted">No notes provided</em>
+                            }
+                            else
+                            {
+                                @Model.Notes
+                            }
+                        </div>
+
+                        <!-- Supporting Documents -->
+                        @if (Model.Documents != null && Model.Documents.Any())
+                        {
+                            <h5 class="mt-4">Supporting Documents</h5>
+                            <div class="list-group">
+                                @foreach (var doc in Model.Documents)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fas fa-file @(doc.FileName.EndsWith(".pdf") ? "text-danger" : doc.FileName.EndsWith(".docx") ? "text-primary" : "text-success") me-2"></i>
+                                            @doc.FileName
+                                        </div>
+                                        <div>
+                                            <small class="text-muted me-2">@((doc.FileSize / 1024f).ToString("N0")) KB</small>
+                                            <a href="@doc.FilePath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <h5 class="mt-4">Supporting Documents</h5>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No supporting documents uploaded.
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Claim Items Details -->
+                <h5>Claim Items</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Date</th>
+                                <th>Hours Worked</th>
+                                <th>Module</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ClaimItems != null && Model.ClaimItems.Any())
+                            {
+                                @foreach (var item in Model.ClaimItems)
+                                {
+                                    <tr>
+                                        <td>@item.Date.ToString("dd MMM yyyy")</td>
+                                        <td>@item.HoursWorked</td>
+                                        <td>@item.Module</td>
+                                        <td>@item.Description</td>
+                                    </tr>
+                                }
+                                <tr class="table-active">
+                                    <td colspan="3" class="text-end fw-bold">Total Hours:</td>
+                                    <td class="fw-bold">@Model.TotalHours</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        <i class="fas fa-exclamation-circle me-2"></i>No claim items found.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Approval Actions -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Approval Decision</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="approvalForm" method="post">
+                                    @Html.AntiForgeryToken()
+
+                                    <div class="mb-3">
+                                        <label for="approvalNotes" class="form-label">Notes (Optional)</label>
+                                        <textarea class="form-control" id="approvalNotes" name="notes" rows="3"
+                                                  placeholder="Add any comments or notes about your decision..."></textarea>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between">
+                                        <a href="@Url.Action("Index", "Approval")" class="btn btn-outline-secondary">
+                                            <i class="fas fa-arrow-left me-2"></i>Back to List
+                                        </a>
+
+                                        <div>
+                                            <!-- Reject Button -->
+                                            <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                                <i class="fas fa-times me-2"></i>Reject Claim
+                                            </button>
+
+                                            <!-- Approve Button -->
+                                            <button type="button" class="btn btn-success" onclick="submitApproval('approve')">
+                                                <i class="fas fa-check me-2"></i>
+                                                @if (userRole == "Coordinator")
+                                                {
+                                                    <text>Approve & Send to Manager</text>
+                                                }
+                                                else if (userRole == "Manager")
+                                                {
+                                                    <text>Final Approval</text>
+                                                }
+                                                else
+                                                {
+                                                    <text>Approve</text>
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Confirmation Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Rejection
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reject this claim?</p>
+                <p class="fw-bold">This action cannot be undone.</p>
+                <div class="mb-3">
+                    <label for="rejectReason" class="form-label">Reason for rejection (required):</label>
+                    <textarea class="form-control" id="rejectReason" rows="3" required
+                              placeholder="Please provide a reason for rejecting this claim..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitRejection()">
+                    <i class="fas fa-times me-2"></i>Confirm Rejection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function submitApproval(action) {
+            const form = document.getElementById('approvalForm');
+            const notes = document.getElementById('approvalNotes').value;
+
+            if (action === 'approve') {
+                if (confirm('Are you sure you want to approve this claim?')) {
+                    // Create a form for approval
+                    const approvalForm = document.createElement('form');
+                    approvalForm.method = 'POST';
+                    approvalForm.action = '@Url.Action("Approve", "Approval", new { id = Model.ClaimId })';
+
+                    const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '__RequestVerificationToken';
+                    csrfInput.value = csrfToken;
+                    approvalForm.appendChild(csrfInput);
+
+                    const notesInput = document.createElement('input');
+                    notesInput.type = 'hidden';
+                    notesInput.name = 'notes';
+                    notesInput.value = notes;
+                    approvalForm.appendChild(notesInput);
+
+                    document.body.appendChild(approvalForm);
+                    approvalForm.submit();
+                }
+            }
+        }
+
+        function submitRejection() {
+            const rejectReason = document.getElementById('rejectReason').value;
+
+            if (!rejectReason.trim()) {
+                alert('Please provide a reason for rejection.');
+                return;
+            }
+
+            if (confirm('Are you sure you want to reject this claim? This action cannot be undone.')) {
+                // Create a form for rejection
+                const rejectionForm = document.createElement('form');
+                rejectionForm.method = 'POST';
+                rejectionForm.action = '@Url.Action("Reject", "Approval", new { id = Model.ClaimId })';
+
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '__RequestVerificationToken';
+                csrfInput.value = csrfToken;
+                rejectionForm.appendChild(csrfInput);
+
+                const notesInput = document.createElement('input');
+                notesInput.type = 'hidden';
+                notesInput.name = 'notes';
+                notesInput.value = rejectReason;
+                rejectionForm.appendChild(notesInput);
+
+                document.body.appendChild(rejectionForm);
+                rejectionForm.submit();
+            }
+        }
+
+        // Enable reject button only when reason is provided
+        document.getElementById('rejectReason').addEventListener('input', function() {
+            const rejectBtn = document.querySelector('#rejectModal .btn-danger');
+            rejectBtn.disabled = !this.value.trim();
+        });
+
+        // Initialize modal events
+        document.addEventListener('DOMContentLoaded', function() {
+            const rejectModal = document.getElementById('rejectModal');
+            rejectModal.addEventListener('show.bs.modal', function() {
+                document.getElementById('rejectReason').value = '';
+            });
+        });
+    </script>
+}
