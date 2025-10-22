@@ -1,0 +1,147 @@
+﻿@model CMCS.Models.ClaimSubmissionViewModel
+@{
+    ViewData["Title"] = "Submit New Claim";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Submit New Claim</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data" id="claimForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ClaimMonth" class="form-label"></label>
+                                <input asp-for="ClaimMonth" class="form-control" type="month" />
+                                <span asp-validation-for="ClaimMonth" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="TotalHours" class="form-label"></label>
+                                <input asp-for="TotalHours" class="form-control" type="number" step="0.5" min="0.5" max="200" />
+                                <span asp-validation-for="TotalHours" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="HourlyRate" class="form-label"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input asp-for="HourlyRate" class="form-control" type="number" step="1" min="100" max="1000" />
+                                </div>
+                                <span asp-validation-for="HourlyRate" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Total Amount</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R</span>
+                                    <input type="text" class="form-control bg-light" value="@Model.TotalAmount.ToString("N2")" readonly />
+                                </div>
+                                <small class="form-text text-muted">Calculated automatically</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label"></label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Optional notes about this claim..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+
+                    <!-- Document Upload Section -->
+                    <div class="mb-4">
+                        <h5 class="border-bottom pb-2">Supporting Documents</h5>
+                        <div class="mb-3">
+                            <label class="form-label">Upload Supporting Documents</label>
+                            <input type="file" class="form-control" id="fileUpload" accept=".pdf,.docx,.xlsx,.jpg,.png" />
+                            <small class="form-text text-muted">Allowed files: PDF, DOCX, XLSX, JPG, PNG (Max: 5MB each)</small>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="uploadDocument()">
+                            <i class="fas fa-upload me-1"></i>Upload Document
+                        </button>
+
+                        <div id="uploadedFiles" class="mt-3">
+                            <!-- Uploaded files will appear here -->
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Claim
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function uploadDocument() {
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('claimId', '0'); // Temporary ID for new claims
+
+            fetch('@Url.Action("UploadDocument", "Claim")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add to uploaded files list
+                    const filesList = document.getElementById('uploadedFiles');
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'alert alert-success alert-dismissible fade show';
+                    fileItem.innerHTML = `
+                        <i class="fas fa-file me-2"></i>${data.fileName}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+                    filesList.appendChild(fileItem);
+
+                    // Clear file input
+                    fileInput.value = '';
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error uploading file. Please try again.');
+            });
+        }
+
+        // Recalculate total amount when hours or rate changes
+        document.getElementById('TotalHours').addEventListener('input', updateTotalAmount);
+        document.getElementById('HourlyRate').addEventListener('input', updateTotalAmount);
+
+        function updateTotalAmount() {
+            const hours = parseFloat(document.getElementById('TotalHours').value) || 0;
+            const rate = parseFloat(document.getElementById('HourlyRate').value) || 0;
+            const total = hours * rate;
+            document.querySelector('input[readonly]').value = total.toFixed(2);
+        }
+    </script>
+}
